@@ -36,7 +36,7 @@ The simplest option is to install the `default` Istio
 using the following command:
 
 {{< text bash >}}
-$ istioctl manifest apply
+$ istioctl install
 {{< /text >}}
 
 This command installs the `default` profile on the cluster defined by your
@@ -47,7 +47,7 @@ is intended for evaluating a broad set of Istio features.
 To enable the Grafana dashboard on top of the `default` profile, set the `addonComponents.grafana.enabled` configuration parameter with the following command:
 
 {{< text bash >}}
-$ istioctl manifest apply --set addonComponents.grafana.enabled=true
+$ istioctl install --set addonComponents.grafana.enabled=true
 {{< /text >}}
 
 In general, you can use the `--set` flag in `istioctl` as you would with
@@ -64,10 +64,10 @@ By default, `istioctl` uses compiled-in charts to generate the install manifest.
 `installPackagePath` to a local file system path:
 
 {{< text bash >}}
-$ istioctl manifest apply --set installPackagePath=< full path to base directory where downloaded >/manifests
+$ istioctl install --set installPackagePath=< full path to base directory where downloaded >/manifests
 {{< /text >}}
 
-If using the `istioctl` {{< istio_full_version >}} binary, this command will result in the same installation as `istioctl manifest apply` alone, because it points to the
+If using the `istioctl` {{< istio_full_version >}} binary, this command will result in the same installation as `istioctl install` alone, because it points to the
 same charts as the compiled-in ones.
 Other than for experimenting with or testing new features, we recommend using the compiled-in charts rather than external ones to ensure compatibility of the
 `istioctl` binary with the charts.
@@ -79,7 +79,7 @@ profile name on the command line. For example, the following command can be used
 to install the `demo` profile:
 
 {{< text bash >}}
-$ istioctl manifest apply --set profile=demo
+$ istioctl install --set profile=demo
 {{< /text >}}
 
 ## Display the list of available profiles
@@ -181,7 +181,7 @@ $ istioctl profile diff default demo
 ## Generate a manifest before installation
 
 You can generate the manifest before installing Istio using the `manifest generate`
-sub-command, instead of `manifest apply`.
+sub-command, instead of `install`.
 For example, use the following command to generate a manifest for the `default` profile:
 
 {{< text bash >}}
@@ -263,14 +263,14 @@ The configuration parameters in this API can be set individually using `--set` o
 line. For example, to enable the control plane security feature in a default configuration profile, use this command:
 
 {{< text bash >}}
-$ istioctl manifest apply --set values.global.controlPlaneSecurityEnabled=true
+$ istioctl install --set values.global.controlPlaneSecurityEnabled=true
 {{< /text >}}
 
 Alternatively, the `IstioOperator` configuration can be specified in a YAML file and passed to
 `istioctl` using the `-f` option:
 
 {{< text bash >}}
-$ istioctl manifest apply -f samples/operator/pilot-k8s.yaml
+$ istioctl install -f samples/operator/pilot-k8s.yaml
 {{< /text >}}
 
 {{< tip >}}
@@ -279,7 +279,7 @@ are also fully supported. To set them on the command line, prepend the option na
 For example, the following command overrides the `pilot.traceSampling` Helm configuration option:
 
 {{< text bash >}}
-$ istioctl manifest apply --set values.pilot.traceSampling=0.1
+$ istioctl install --set values.pilot.traceSampling=0.1
 {{< /text >}}
 
 Helm values can also be set in an `IstioOperator` CR (YAML file) as described in
@@ -293,23 +293,18 @@ If you want to set Kubernetes resource settings, use the `IstioOperator` API as 
 
 The `IstioOperator` API defines components as shown in the table below:
 
-| Components |
-| ------------|
-`base` |
-`pilot` |
-`proxy` |
-`sidecarInjector` |
-`telemetry` |
-`policy` |
-`citadel` |
-`nodeagent` |
-`galley` |
-`ingressGateways` |
-`egressGateways` |
-`cni` |
+| Components | Description |
+| ------------| ---------- |
+`base` | Installs the core configuration for Istio, such as `CustomResourceDefinition`s |
+`pilot` | Installs the control plane for Istio, Istiod |
+`telemetry` | (deprecated) Installs [Mixer](/docs/tasks/observability/mixer/) based telemetry | 
+`policy` | (deprecated) Installs [Mixer](/docs/tasks/policy-enforcement/) based policy |
+`ingressGateways` | Installs an [ingress gateway](/docs/tasks/traffic-management/ingress/) |
+`egressGateways` | Installs an [egress gateway](/docs/tasks/traffic-management/egress/) |
+`cni` | Installs [Istio CNI](/docs/setup/additional-setup/cni/) |
 
 In addition to the core Istio components, third-party addon components are also available. These can
-be enabled and configured through the `addonComponents` spec of the `IstioOperator` API or using the Helm pass-through API:
+be enabled and configured through the `addonComponents` spec of the `IstioOperator` API:
 
 {{< text yaml >}}
 apiVersion: install.istio.io/v1alpha1
@@ -320,14 +315,6 @@ spec:
       enabled: true
 {{< /text >}}
 
-{{< text yaml >}}
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    grafana:
-      enabled: true
-{{< /text >}}
 
 ### Configure component settings
 
@@ -341,7 +328,7 @@ The simplest customization is to turn a component on or off from the configurati
 To disable the telemetry component in a default configuration profile, use this command:
 
 {{< text bash >}}
-$ istioctl manifest apply --set components.telemetry.enabled=false
+$ istioctl install --set components.telemetry.enabled=false
 {{< /text >}}
 
 Alternatively, you can disable the telemetry component using a configuration overlay file:
@@ -357,10 +344,10 @@ spec:
       enabled: false
 {{< /text >}}
 
-1. Use the `telemetry_off.yaml` overlay file with the `manifest apply` command:
+1. Use the `telemetry_off.yaml` overlay file with the `install` command:
 
 {{< text bash >}}
-$ istioctl manifest apply -f telemetry_off.yaml
+$ istioctl install -f telemetry_off.yaml
 {{< /text >}}
 
 Another customization is to select different namespaces for features and components. The following is an example
@@ -497,10 +484,10 @@ spec:
           operator: Exists
 {{< /text >}}
 
-Use `manifest apply` to apply the modified settings to the cluster:
+Use `install` to apply the modified settings to the cluster:
 
 {{< text syntax="bash" repo="operator" >}}
-$ istioctl manifest apply -f samples/operator/pilot-k8s.yaml
+$ istioctl install -f samples/operator/pilot-k8s.yaml
 {{< /text >}}
 
 ### Customize Istio settings using the Helm API
