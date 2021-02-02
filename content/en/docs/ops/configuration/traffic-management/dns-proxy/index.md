@@ -39,6 +39,12 @@ This can also be enabled on a per-pod basis with the [`proxy.istio.io/config` an
 When deploying to a VM using [`istioctl workload entry configure`](/docs/setup/install/virtual-machine/), basic DNS proxying will be enabled by default.
 {{< /tip >}}
 
+{{< warning >}}
+DNS proxying is currently incompatible with local DNS resolvers, such as those used by `systemd-resolved`. Check `/etc/resolv.conf` and ensure the `nameserver` is not a local address.
+
+For example, a configuration such as `nameserver 127.0.0.53` would not be supported.
+{{< /warning >}}
+
 ## DNS capture In action
 
 To try out the DNS capture, first setup a `ServiceEntry` for some external service:
